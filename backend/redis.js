@@ -16,9 +16,12 @@ class Redis {
 
         this.dataSets = [];
 
-        // this._handleErr = async (fn) => (...args) => {
-        //     return fn(...args).catch(err => console.error(err));
-        // };
+        //Since the connection can terminate at anytime and leave the process with an 
+        //Unhandled error, we use this.
+        this.client.on('error', (err) => {
+            console.error("An error has occured with the Redis module!");
+            console.error(err);
+        });
 
         //Run this code when the client connects to the database.
         this.client.on('connect', async () => {
