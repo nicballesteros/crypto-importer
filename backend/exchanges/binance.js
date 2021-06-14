@@ -8,10 +8,6 @@ const binance = require('binance');
 class Binance {
     constructor(options) {
         this.binanceClient = new binance.BinanceRest(options);
-
-        // this._handleErr = async (fn) => (...args) => {
-        //     return fn(...args).catch(err => console.error(err));
-        // }
     }
 
     async getHistoricalData(ticker, startTime, endTime, progress) {
@@ -44,9 +40,10 @@ class Binance {
             let delay = i * 60;
             requests.push(
                 this._delayRequest(delay, this._klines.bind(this), info)
-                    .then(() => {
+                    .then((res) => {
                         requestCount++;
                         progress = requestCount / numberOfRequests / 2;
+                        return res;
                     })
             );
         }

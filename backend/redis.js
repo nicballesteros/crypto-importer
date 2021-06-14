@@ -4,6 +4,7 @@
  * 
  */
 
+const { resolve } = require('path/posix');
 const redis = require('redis');
 
 class Redis {
@@ -31,14 +32,20 @@ class Redis {
     }
 
     /**
-     * @description reloadDataSets reloads the dataSets from the database.
+     * @description reloadDataSets refreshes the dataSets from the Redis database.
+     * The dataSets are the span of how much data is in the database. After a new import,
+     * this process needs to update the dataSets since they have changed.
      */
 
     async reloadDataSets() {
         //Call redis LLEN command on key 'spansets'.
         try {
-            let length = await this._llen('spansets');
-            this.dataSets = await this._lrange('spansets', 0, length);
+            let length = await this._llen('datasets');
+            this.dataSets = await this._lrange('datasets', 0, length);
+            
+            for(let i = 0; i < length; i++) {
+                this.dataSets[i] = JSON.parse(this.dataSets[i]);
+            }
         } catch (err) {
             this.dataSets = [];
             return;
@@ -54,11 +61,39 @@ class Redis {
         return this.dataSets;
     }
 
+    /**
+     * @description putNewDataSet puts a new dataSet into the Redis Database after an import.
+     * @param {Object} obj The data object that is going to be put into the database.
+     * @returns {Promise} A promise when the database server sends back an 'OK' signal.
+     */
+
     putNewDataSet(obj) {
         let str = JSON.stringify(obj);
         
-        return this._rpush('spansets', str);
+        return this._rpush('datasets', str);
     }
+
+    async amendDataSet(obj, newObj) {
+        await this.deleteDataSet(obj);
+
+        await this.putNewDataSet(newObj);
+    }
+
+    deleteDataSet(obj) {
+        let str = JSON.stringify(obj);
+        return this._lrem('datasets', 0, str)
+    }
+
+    /**
+     * @description putNewMin puts a miniute of data into the Redis Database. It first
+     * makes the hash key out of the openTime of the data and the ticker. Then the field is
+     * set as the exchange that this data comes from. Finally the data is encoded in JSON format
+     * and sent to the Redis Server.
+     * @param {Object} dataObj The data that is to be put into the database.
+     * @param {String} ticker The ticker of the data.
+     * @param {String} exchange The exchange that the data comes from.
+     * @returns {Promise} A promise when the database server sends back an 'OK' signal.
+     */
 
     putNewMin(dataObj, ticker, exchange) {
         let key = dataObj.openTime;
@@ -76,7 +111,7 @@ class Redis {
     /**
      * @description A Redis LLEN Promise wrapper.
      * @param String key 
-     * @returns Promise
+     * @returns Promise A promise for when the database server returns an 'OK' signal.
      */
 
     _llen(key) {
@@ -103,6 +138,27 @@ class Redis {
     _lrange(key, from, to) {
         return new Promise((resolve, reject) => {
             this.client.lrange(key, from, to, (err, res) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+
+                resolve(res);
+            });
+        });
+    }
+
+    /**
+     * @description This is a Promise Wrapper for the Redis LREM command.
+     * @param {String} key The key to the list
+     * @param {Number} count The number of elements we want to remove. (0 for all)
+     * @param {String} value The value from the list that we want to remove.
+     * @returns {Promise} A promise that the Redis Server will return an 'OK' signal or error.
+     */
+
+    _lrem(key, count, value) {
+        return new Promise((resolve, reject) => {
+            this.client.lrem(key, count, value, (err, res) => {
                 if (err) {
                     reject(err);
                     return;
@@ -174,9 +230,7 @@ class Redis {
         });
     }
 
-    _handleErr(err) {
-        console.error(err);
-    }
+    
 }
 
 exports.Client = Redis;
