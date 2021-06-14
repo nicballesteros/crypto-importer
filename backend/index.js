@@ -250,13 +250,45 @@ app.get('/progress', (req, res) => {
  */
 
 app.get('/datasets', async (req, res) => {
-    console.log(`API Endpoint '/dataSets' called from ${req.ip}`);
+    console.log(`API Endpoint '/datasets' called from ${req.ip}`);
     
     await redisClient.reloadDataSets();
 
     let dataSets = redisClient.getDataSets();
 
     res.json(dataSets);
+});
+
+app.get('/data', async (req, res) => {
+    console.log(`API Endpoint '/data' called from ${req.ip}`);
+
+    let ticker = req.body.ticker;
+    let exchange = req.body.exchange;
+    let startTime = req.body.startTime;
+    let endTime = req.body.endTime;
+
+    await redisClient.reloadDataSets();
+
+    let dataSets = redisClient.getDataSets();
+
+    let found;
+
+    dataSets.forEach(item => {
+        if (item.startTime <= startTime && item.endTime >= endTime) {
+            found = item;
+        }
+    });
+
+    if (found == undefined) {
+        res.sendStatus(404);
+        return;
+    }
+ 
+    let payload = await redisClient.getPriceData(ticker, exchange, startTime, endTime);
+
+    res.json({
+        payload: payload,
+    });
 });
 
 app.listen(port, () => {

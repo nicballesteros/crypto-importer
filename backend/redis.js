@@ -4,7 +4,6 @@
  * 
  */
 
-const { resolve } = require('path/posix');
 const redis = require('redis');
 
 class Redis {
@@ -29,6 +28,48 @@ class Redis {
             //Pull in dataSets from redis for the first time.
             await this.reloadDataSets();
         });
+    }
+
+    /**
+     * @description getPriceData gets price data from the redis database.
+     * 
+     * @param {String} ticker the ticker for the data.
+     * @param {String} exchange the exchange for the data.
+     * @param {Number} startTime the starting time of the data.
+     * @param {Number} endTime the end time of the data.
+     * @returns {Array} An array of the data.
+     */
+
+    async getPriceData(ticker, exchange, startTime, endTime) {
+        let currentTime = startTime;
+
+        let increment = 60 * 1000;
+        
+        let numOfMins = endTime - startTime;
+        numOfMins /= (60 * 1000);
+
+        let promises = [];
+
+        for (let i = 0; i < numOfMins; i++) {
+            let key = currentTime;
+
+            key += ':';
+            key += ticker;
+
+            promises.push(this._hmget(key, exchange));
+
+            currentTime += increment;
+        }
+
+        let rawData = await Promise.all(promises).catch(err => console.error(err));
+
+        let data = [];
+
+        rawData.forEach(item => {
+            data.push(JSON.parse(item[0]));
+        });
+
+        return data;
     }
 
     /**
