@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "baseUrl": "./",
+        "paths": {
+            "@exchanges/*": ["exchanges/*"],
+            // "@assets/*": ["src/assets/*"],
+            // "@router/*": ["src/router/*"],
+            // "@views/*": ["src/views/*"],
+            // "@src/*": ["src/*"],
+        }
+    }
+}
