@@ -1,0 +1,23 @@
+{
+  "name": "crypto-importer-backend",
+  "version": "1.0.0",
+  "description": "The backend to the crypto-importer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nicballesteros/crypto-importer.git"
+  },
+  "keywords": [
+    "cryptocurrency",
+    "binance",
+    "importer"
+  ],
+  "author": "Nic Ballesteros",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
