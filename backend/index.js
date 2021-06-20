@@ -294,3 +294,10 @@ app.get('/data', async (req, res) => {
 app.listen(port, () => {
     console.log(`crypto-importer started on port ${port}`);
 });
+
+//Error Handling for the express module.
+// app.on('error', (err) => {
+//     console.error("An error has occured with the Express Module!");
+//     console.error(err);
+//     process.exit();
+// });

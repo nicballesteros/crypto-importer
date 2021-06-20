@@ -21,6 +21,7 @@ class Redis {
         this.client.on('error', (err) => {
             console.error("An error has occured with the Redis module!");
             console.error(err);
+            process.exit();
         });
 
         //Run this code when the client connects to the database.
